@@ -1,3 +1,98 @@
+def COLOR_MAP = [
+  'SUCCESS': 'good',
+  'FAILURE': 'danger',
+]
+
+pipeline {
+  agent any
+  tools {
+    maven "maven3.9.6"
+    jdk "openJDK17"
+  }
+  stages {
+    stage('Git Clone') {
+      steps {
+        git branch: 'main', url: 'https://github.com/eyosolutions/web-app.git'
+        sh "echo end of git clone"
+      }
+    }
+    stage('Maven build') {
+      steps {
+        sh 'mvn clean'
+        sh "echo maven clean done."
+      }
+    }
+    stage('Maven test') {
+      steps {
+        sh 'mvn test'
+        sh "echo maven test done."
+      }
+    }
+    stage('Maven package') {
+      steps {
+        sh 'mvn package'
+        sh "echo maven package done."
+      }
+    }
+    stage('Sonar Analysis') {
+      environment {
+        scannerHome = tool 'sonar5.0'
+      }
+      steps {
+        withSonarQubeEnv('sonarqube') {
+          sh '${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=jomacs'
+        }
+      }
+    }
+    stage('Quality Gate') {
+      steps {
+        timeout(time: 2, unit: 'MINUTES') {
+          waitForQualityGate abortPipeline: true
+        }
+      }
+    }
+    stage('Upload Artifact') {
+      steps {
+        nexusArtifactUploader(
+          nexusVersion: 'nexus3',
+          protocol: 'http',
+          nexusUrl: '172.31.24.16:8081',
+          groupId: 'com.mt',
+          version: "${env.BUILD_ID}-${env.BUILD_TIMESTAMP}-RELEASE",
+          repository: 'webapp-release',
+          credentialsId: 'nexus-id',
+          artifacts: [
+              [artifactId: 'maven-web-application',
+              classifier: '',
+              file: 'target/web-app.war',
+              type: 'war']
+          ]
+        )
+      }
+    }
+    stage('Deploy to UAT') {
+      steps {
+        sh "echo start deploying to server in UAT Env"
+        deploy adapters: [tomcat9(credentialsId: 'tomcat-id', path: '', url: 'http://172.31.38.154:8080')],
+        contextPath: null,
+        war: 'target/*.war'
+      } 
+    }
+
+  }
+  // After stages
+  post {
+    always {
+      echo 'Slack Notifications.'
+      slackSend channel: '#testing',
+        color: COLOR_MAP[currentBuild.currentResult],
+        message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
+    }
+  }
+}
+
+
+/*
 pipeline{
   agent any
   tools{
@@ -51,7 +146,7 @@ pipeline{
       }
     }
 }
-
+*/
 
 
 /*
