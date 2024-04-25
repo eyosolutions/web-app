@@ -21,7 +21,7 @@
 		<spring.version>5.1.2.RELEASE</spring.version>
 		<junit.version>4.11</junit.version>
 		<log4j.version>1.2.17</log4j.version>
-		<sonar.host.url>http://172.31.30.86:9000/</sonar.host.url>
+		<sonar.host.url>http://172.31.19.25:9000/</sonar.host.url>
 		<sonar.login>admin</sonar.login>
 		<sonar.password>admin123</sonar.password>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -97,13 +97,13 @@
 	    <repository>
 	      <id>nexus</id>
 	      <name>JOMACS Releases Nexus Repository</name>
-	      <url>http://172.31.37.30:8081/repository/web-app-release/</url>
+	      <url>http://172.31.19.25:8081/repository/web-app-release/</url>
 	    </repository>
 	    
 	    <snapshotRepository>
 	      <id>nexus</id>
 	      <name>JOMACS Snapshot Nexus Repository </name>
-	      <url>http://172.31.37.30:8081/repository/web-app-snapshot/</url>
+	      <url>http://172.31.19.25:8081/repository/web-app-snapshot/</url>
 	    </snapshotRepository>
 	    
 	</distributionManagement>
@@ -143,6 +143,16 @@
 					<downloadJavadocs>true</downloadJavadocs>
 					<wtpversion>2.0</wtpversion>
 					<wtpContextName>maven-web-application</wtpContextName>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.tomcat.maven</groupId>
+				<artifactId>tomcat9-maven-plugin</artifactId>
+				<version>2.1</version>
+				<configuration>
+						<server>TomcatServer</server>
+						<url>http://13.48.67.154:8888/webapps</url>
 				</configuration>
 			</plugin>
 			
